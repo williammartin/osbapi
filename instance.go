@@ -26,6 +26,11 @@ type ServiceInstance struct {
 	PlanID    string `json:"plan_id"`
 }
 
+type DeprovisionRequest struct {
+	ServiceID string `json:"service_id"`
+	PlanID    string `json:"plan_id"`
+}
+
 func (c *Client) Provision(instanceID string, provisionRequest *ProvisionRequest) (*ProvisionResponse, error) {
 	reqBody, err := json.Marshal(provisionRequest)
 	if err != nil {
@@ -59,6 +64,36 @@ func (c *Client) Provision(instanceID string, provisionRequest *ProvisionRequest
 	}
 
 	return &provisionResponse, nil
+}
+
+func (c *Client) Deprovision(instanceID string, deprovisionRequest *DeprovisionRequest) error {
+	uri := fmt.Sprintf("%s/%s/%s", c.brokerURL, INSTANCES_URL, instanceID)
+	req, err := NewRequest("DELETE", uri, nil, WithCommonBrokerHeaders(c)...)
+	if err != nil {
+		return err
+	}
+
+	q := req.URL.Query()
+	q.Add("service_id", deprovisionRequest.ServiceID)
+	q.Add("plan_id", deprovisionRequest.PlanID)
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("provision failed with status %s and body %s", resp.Status, string(body))
+	}
+
+	return nil
 }
 
 func (c *Client) GetInstance(instanceID string) (*ServiceInstance, error) {

@@ -43,6 +43,13 @@ var _ = Describe("Client", func() {
 			planID = catalog.Services[0].Plans[0].ID
 		})
 
+		AfterEach(func() {
+			Expect(client.Deprovision("my-instance", &osbapi.DeprovisionRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})).To(Succeed())
+		})
+
 		It("results in a service instance", func() {
 			_, err := client.Provision("my-instance", &osbapi.ProvisionRequest{
 				ServiceID:      serviceID,
@@ -82,6 +89,18 @@ var _ = Describe("Client", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
+		AfterEach(func() {
+			Expect(client.Unbind("my-instance", "my-binding", &osbapi.UnbindingRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})).To(Succeed())
+
+			Expect(client.Deprovision("my-instance", &osbapi.DeprovisionRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})).To(Succeed())
+		})
+
 		It("results in a service binding", func() {
 			_, err := client.Bind("my-instance", "my-binding", &osbapi.BindingRequest{
 				ServiceID: serviceID,
@@ -98,6 +117,95 @@ var _ = Describe("Client", func() {
 			Expect(credentials["username"]).NotTo(BeEmpty())
 			Expect(credentials["password"]).NotTo(BeEmpty())
 		})
+	})
 
+	Describe("Deleting a binding", func() {
+		var (
+			serviceID string
+			planID    string
+		)
+
+		BeforeEach(func() {
+			catalog, err := client.Catalog()
+			Expect(err).NotTo(HaveOccurred())
+
+			serviceID = catalog.Services[0].ID
+			planID = catalog.Services[0].Plans[0].ID
+
+			_, err = client.Provision("my-instance", &osbapi.ProvisionRequest{
+				ServiceID:      serviceID,
+				PlanID:         planID,
+				OrganizationID: "org-id",
+				SpaceID:        "space-id",
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = client.Bind("my-instance", "my-binding", &osbapi.BindingRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			Expect(client.Deprovision("my-instance", &osbapi.DeprovisionRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})).To(Succeed())
+		})
+
+		It("results in the service binding disappearing", func() {
+			Expect(client.Unbind("my-instance", "my-binding", &osbapi.UnbindingRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})).To(Succeed())
+
+			_, err := client.GetBinding("my-instance", "my-binding")
+			Expect(err).To(MatchError(ContainSubstring("Not Found")))
+		})
+	})
+
+	Describe("Deleting an instance", func() {
+		var (
+			serviceID string
+			planID    string
+		)
+
+		BeforeEach(func() {
+			catalog, err := client.Catalog()
+			Expect(err).NotTo(HaveOccurred())
+
+			serviceID = catalog.Services[0].ID
+			planID = catalog.Services[0].Plans[0].ID
+
+			_, err = client.Provision("my-instance", &osbapi.ProvisionRequest{
+				ServiceID:      serviceID,
+				PlanID:         planID,
+				OrganizationID: "org-id",
+				SpaceID:        "space-id",
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = client.Bind("my-instance", "my-binding", &osbapi.BindingRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(client.Unbind("my-instance", "my-binding", &osbapi.UnbindingRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})).To(Succeed())
+		})
+
+		It("results in the service instance disappearing", func() {
+			Expect(client.Deprovision("my-instance", &osbapi.DeprovisionRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})).To(Succeed())
+
+			_, err := client.GetInstance("my-instance")
+			Expect(err).To(MatchError(ContainSubstring("Not Found")))
+		})
 	})
 })
