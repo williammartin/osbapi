@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 )
 
 type ProvisionRequest struct {
@@ -31,14 +30,10 @@ func (c *Client) Provision(instanceID string, provisionRequest *ProvisionRequest
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/v2/service_instances/%s", c.brokerURL, instanceID), bytes.NewBuffer(reqBody))
+	req, err := NewRequest("PUT", fmt.Sprintf("%s/v2/service_instances/%s", c.brokerURL, instanceID), bytes.NewBuffer(reqBody), WithCommonBrokerHeaders(c)...)
 	if err != nil {
 		return nil, err
 	}
-
-	req.SetBasicAuth(c.username, c.password)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Broker-API-Version", c.apiVersion)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -64,14 +59,10 @@ func (c *Client) Provision(instanceID string, provisionRequest *ProvisionRequest
 }
 
 func (c *Client) GetInstance(instanceID string) (*ServiceInstance, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v2/service_instances/%s", c.brokerURL, instanceID), nil)
+	req, err := NewRequest("GET", fmt.Sprintf("%s/v2/service_instances/%s", c.brokerURL, instanceID), nil, WithCommonBrokerHeaders(c)...)
 	if err != nil {
 		return nil, err
 	}
-
-	req.SetBasicAuth(c.username, c.password)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Broker-API-Version", c.apiVersion)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -94,4 +85,12 @@ func (c *Client) GetInstance(instanceID string) (*ServiceInstance, error) {
 	}
 
 	return &serviceInstance, nil
+}
+
+func WithCommonBrokerHeaders(c *Client) []RequestOpt {
+	return []RequestOpt{
+		WithBasicAuthHeader(c.username, c.password),
+		WithAPIVersionHeader(c.apiVersion),
+		WithContentTypeHeader(),
+	}
 }

@@ -30,7 +30,7 @@ var _ = Describe("Client", func() {
 		})
 	})
 
-	FDescribe("Provisioning a service", func() {
+	Describe("Provisioning a service", func() {
 		var (
 			serviceID string
 			planID    string
