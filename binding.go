@@ -104,7 +104,7 @@ func (c *Client) GetBinding(instanceID, bindingID string) (*ServiceBinding, erro
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 && resp.StatusCode != 201 {
+	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("get binding failed with status %s and body %s", resp.Status, string(body))
 	}
 

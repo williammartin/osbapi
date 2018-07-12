@@ -114,7 +114,7 @@ func (c *Client) GetInstance(instanceID string) (*ServiceInstance, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 && resp.StatusCode != 201 {
+	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("get instance failed with status %s and body %s", resp.Status, string(body))
 	}
 
