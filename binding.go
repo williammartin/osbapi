@@ -7,32 +7,22 @@ import (
 	"io/ioutil"
 )
 
-var INSTANCES_URL = "v2/service_instances"
-
-type ProvisionRequest struct {
-	ServiceID      string `json:"service_id"`
-	PlanID         string `json:"plan_id"`
-	OrganizationID string `json:"organization_guid"`
-	SpaceID        string `json:"space_guid"`
-}
-
-type ProvisionResponse struct {
-	DashboardURL string `json:"dashboard_url"`
-	Operation    string `json:"operation"`
-}
-
-type ServiceInstance struct {
+type BindingRequest struct {
 	ServiceID string `json:"service_id"`
 	PlanID    string `json:"plan_id"`
 }
 
-func (c *Client) Provision(instanceID string, provisionRequest *ProvisionRequest) (*ProvisionResponse, error) {
-	reqBody, err := json.Marshal(provisionRequest)
+type ServiceBinding struct {
+	Credentials interface{} `json:"credentials"`
+}
+
+func (c *Client) Bind(instanceID, bindingID string, bindingRequest *BindingRequest) (*ServiceBinding, error) {
+	reqBody, err := json.Marshal(bindingRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	uri := fmt.Sprintf("%s/%s/%s", c.brokerURL, INSTANCES_URL, instanceID)
+	uri := fmt.Sprintf("%s/%s/%s/service_bindings/%s", c.brokerURL, INSTANCES_URL, instanceID, bindingID)
 	req, err := NewRequest("PUT", uri, bytes.NewBuffer(reqBody), WithCommonBrokerHeaders(c)...)
 	if err != nil {
 		return nil, err
@@ -53,16 +43,16 @@ func (c *Client) Provision(instanceID string, provisionRequest *ProvisionRequest
 		return nil, fmt.Errorf("provision failed with status %s and body %s", resp.Status, string(body))
 	}
 
-	var provisionResponse ProvisionResponse
-	if err := json.Unmarshal(body, &provisionResponse); err != nil {
+	var serviceBinding ServiceBinding
+	if err := json.Unmarshal(body, &serviceBinding); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal body %s with error %v", string(body), err)
 	}
 
-	return &provisionResponse, nil
+	return &serviceBinding, nil
 }
 
-func (c *Client) GetInstance(instanceID string) (*ServiceInstance, error) {
-	uri := fmt.Sprintf("%s/%s/%s", c.brokerURL, INSTANCES_URL, instanceID)
+func (c *Client) GetBinding(instanceID, bindingID string) (*ServiceBinding, error) {
+	uri := fmt.Sprintf("%s/%s/%s/service_bindings/%s", c.brokerURL, INSTANCES_URL, instanceID, bindingID)
 	req, err := NewRequest("GET", uri, nil, WithCommonBrokerHeaders(c)...)
 	if err != nil {
 		return nil, err
@@ -83,10 +73,10 @@ func (c *Client) GetInstance(instanceID string) (*ServiceInstance, error) {
 		return nil, fmt.Errorf("get instance failed with status %s and body %s", resp.Status, string(body))
 	}
 
-	var serviceInstance ServiceInstance
-	if err := json.Unmarshal(body, &serviceInstance); err != nil {
+	var serviceBinding ServiceBinding
+	if err := json.Unmarshal(body, &serviceBinding); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal body %s with error %v", string(body), err)
 	}
 
-	return &serviceInstance, nil
+	return &serviceBinding, nil
 }

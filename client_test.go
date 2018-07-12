@@ -21,7 +21,6 @@ var _ = Describe("Client", func() {
 	})
 
 	Describe("Fetching the catalog", func() {
-
 		It("can parse an OSBAPI catalog response", func() {
 			catalog, err := client.Catalog()
 			Expect(err).NotTo(HaveOccurred())
@@ -59,5 +58,46 @@ var _ = Describe("Client", func() {
 			Expect(instance.ServiceID).To(Equal(serviceID))
 			Expect(instance.PlanID).To(Equal(planID))
 		})
+	})
+
+	Describe("Creating a binding", func() {
+		var (
+			serviceID string
+			planID    string
+		)
+
+		BeforeEach(func() {
+			catalog, err := client.Catalog()
+			Expect(err).NotTo(HaveOccurred())
+
+			serviceID = catalog.Services[0].ID
+			planID = catalog.Services[0].Plans[0].ID
+
+			_, err = client.Provision("my-instance", &osbapi.ProvisionRequest{
+				ServiceID:      serviceID,
+				PlanID:         planID,
+				OrganizationID: "org-id",
+				SpaceID:        "space-id",
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("results in a service binding", func() {
+			_, err := client.Bind("my-instance", "my-binding", &osbapi.BindingRequest{
+				ServiceID: serviceID,
+				PlanID:    planID,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			binding, err := client.GetBinding("my-instance", "my-binding")
+			Expect(err).NotTo(HaveOccurred())
+
+			credentials, ok := binding.Credentials.(map[string]interface{})
+			Expect(ok).To(BeTrue())
+
+			Expect(credentials["username"]).NotTo(BeEmpty())
+			Expect(credentials["password"]).NotTo(BeEmpty())
+		})
+
 	})
 })

@@ -80,6 +80,14 @@ func (c *Client) Catalog() (*Catalog, error) {
 
 type RequestOpt func(r *http.Request)
 
+func WithCommonBrokerHeaders(c *Client) []RequestOpt {
+	return []RequestOpt{
+		WithBasicAuthHeader(c.username, c.password),
+		WithAPIVersionHeader(c.apiVersion),
+		WithContentTypeHeader(),
+	}
+}
+
 func WithAPIVersionHeader(apiVersion string) RequestOpt {
 	return func(req *http.Request) {
 		req.Header.Set("X-Broker-API-Version", apiVersion)
