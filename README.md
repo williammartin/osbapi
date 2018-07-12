@@ -22,7 +22,7 @@ client := osbapi.NewClient("http://my-broker.com:8080,
     osbapi.WithAPIVersion("2.13"),
     osbapi.WithBasicAuth("admin", "password"))
 
-catalog, _ := client.Catalog()
+catalog, _ := client.GetCatalog()
 
 serviceID := catalog.Services[0].ID
 planID := catalog.Services[0].Plans[0].ID
@@ -38,6 +38,10 @@ client.Bind("my-instance", "my-binding", &osbapi.BindingRequest{
     ServiceID: serviceID,
     PlanID:    planID,
 })
+
+client.GetInstance("my-instance")
+
+client.GetBinding("my-instance", "my-binding")
 
 client.Unbind("my-instance", "my-binding", &osbapi.UnbindingRequest{
     ServiceID: serviceID,

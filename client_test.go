@@ -22,7 +22,7 @@ var _ = Describe("Client", func() {
 
 	Describe("Fetching the catalog", func() {
 		It("can parse an OSBAPI catalog response", func() {
-			catalog, err := client.Catalog()
+			catalog, err := client.GetCatalog()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(catalog.Services[0].Name).To(Equal("overview-broker"))
 			Expect(catalog.Services[0].Plans[0].Name).To(Equal("simple"))
@@ -36,7 +36,7 @@ var _ = Describe("Client", func() {
 		)
 
 		BeforeEach(func() {
-			catalog, err := client.Catalog()
+			catalog, err := client.GetCatalog()
 			Expect(err).NotTo(HaveOccurred())
 
 			serviceID = catalog.Services[0].ID
@@ -74,7 +74,7 @@ var _ = Describe("Client", func() {
 		)
 
 		BeforeEach(func() {
-			catalog, err := client.Catalog()
+			catalog, err := client.GetCatalog()
 			Expect(err).NotTo(HaveOccurred())
 
 			serviceID = catalog.Services[0].ID
@@ -126,7 +126,7 @@ var _ = Describe("Client", func() {
 		)
 
 		BeforeEach(func() {
-			catalog, err := client.Catalog()
+			catalog, err := client.GetCatalog()
 			Expect(err).NotTo(HaveOccurred())
 
 			serviceID = catalog.Services[0].ID
@@ -172,7 +172,7 @@ var _ = Describe("Client", func() {
 		)
 
 		BeforeEach(func() {
-			catalog, err := client.Catalog()
+			catalog, err := client.GetCatalog()
 			Expect(err).NotTo(HaveOccurred())
 
 			serviceID = catalog.Services[0].ID

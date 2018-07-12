@@ -1,11 +1,7 @@
 package osbapi
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -45,37 +41,6 @@ func NewClient(brokerURL string, opts ...ClientOpt) *Client {
 	}
 
 	return client
-}
-
-func (c *Client) Catalog() (*Catalog, error) {
-	req, err := NewRequest("GET", fmt.Sprintf("%s/v2/catalog", c.brokerURL), nil,
-		WithBasicAuthHeader(c.username, c.password),
-		WithAPIVersionHeader(c.apiVersion))
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, errors.New(resp.Status)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var catalog Catalog
-	if err := json.Unmarshal(body, &catalog); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal body %s with error %v", string(body), err)
-	}
-
-	return &catalog, nil
 }
 
 type RequestOpt func(r *http.Request)
